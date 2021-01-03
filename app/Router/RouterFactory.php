@@ -18,6 +18,8 @@ final class RouterFactory
 		$router->addRoute('<presenter>/<action>[/<id>]', 'Homepage:default');
 		$router->addRoute('teams/<id>', 'Api:default');
 		$router->addRoute('users/<id>', 'Api:default');
+		$router->addRoute('tasks/<id>', 'Api:default');
+		$router->addRoute('tasks/<json>', 'Api:default');
 		$router->addRoute('users/<json>', 'Api:default');
 		return $router;
 	}
