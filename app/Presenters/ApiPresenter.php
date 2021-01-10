@@ -9,7 +9,6 @@ use Nette\Application\LinkGenerator;
 use Nette\Application\Responses\JsonResponse;
 use Nette\Utils\Finder;
 use Nette\Utils\Json;
-use Nette\Utils\Array;
 
 final class ApiPresenter extends Nette\Application\UI\Presenter
 {
@@ -20,6 +19,13 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         // Inicializace vnitřního stavu objektu
         $this->database = $database;
         $this->httpRequest = $httpRequest;
+    }
+
+    public function actionGetNumberOfUser($id) {
+        // Získá cestu k modelovému adresáři
+        $data = $this->database->query('SELECT COUNT(*) FROM users WHERE team=?', $id)->fetch();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse($data));
     }
 
     public function actionGetUser($id) {
@@ -36,24 +42,65 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         $this->sendResponse(new JsonResponse(['name' => $dataTeam->name, 'code' => $dataTeam->code, 'isSolved' => $dataTeam->isSolved]));
     }
 
+    public function actionUserIdByName($id) {
+        // Získá cestu k modelovému adresáři
+        $dataTeam = $this->database->table('users')->where('name=?', $id)->fetch();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse(['id' => $dataTeam->id]));
+    }
+
+    public function actionGetTaskDetail($id) {
+        // Získá cestu k modelovému adresáři
+        $data = $this->database->query('SELECT * FROM task WHERE userId=?', $id)->fetchAll();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse(['task' => $data]));
+    }
+
+    public function actionGetTeamDetail($id) {
+        // Získá cestu k modelovému adresáři
+        $data = $this->database->query('SELECT * FROM teams WHERE code=?', $id)->fetch();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse(['name' => $data->name, 'code' => $data->code, 'isSolved' => $data->isSolved, 'id' => $data->id]));
+    }
+
+    public function actionGetUserDetail($id) {
+        $all = Json::decode($id);
+        // Získá cestu k modelovému adresáři
+        $data = $this->database->query('SELECT * FROM users WHERE name=? and password=?', $all->name, $all->password)->fetch();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse(['user' => $data]));
+    }
+
+    public function actionGetAllUsersFromTeam($id) {
+        // Získá cestu k modelovému adresáři
+        $data = $this->database->query('SELECT name FROM users WHERE team=?', $id)->fetchAll();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse(['users' => $data]));
+    }
+
     public function actionGetTask($id) {
         // Získá cestu k modelovému adresáři
         $dataTeam = $this->database->table('task')->where('teamCode=?', $id)->fetch();
         // Vrátí výsledek
-        $this->sendResponse(new JsonResponse(['teamCode' => $dataTeam->teamCode, 'name' => $dataTeam->name, 'description' => $dataTeam->description, 'userId' => $dataTeam->userId, 'dateFrom' => $dataTeam->dateFrom, 'dateTo' => $dataTeam->dateTo]));
+        $this->sendResponse(new JsonResponse(['teamCode' => $dataTeam->teamCode, 'state' => $dataTeam->state, 'name' => $dataTeam->name, 'description' => $dataTeam->description, 'userId' => $dataTeam->userId, 'dateFrom' => $dataTeam->dateFrom, 'dateTo' => $dataTeam->dateTo]));
     }
 
     public function actionPostUser($id) {
         // Získá cestu k modelovému adresáři
         $all = Json::decode($id);
-        $this->database->query('INSERT INTO users', [
-            'name' => $all->name,
-            'email' => $all->email,
-            'password' => $all->password,
-            'team' => $all->teamId
-        ]);
-        // Vrátí vloženou hodnotu
-        $this->sendResponse(new JsonResponse($all));
+        try {
+            $this->database->query('INSERT INTO users', [
+                'name' => $all->name,
+                'email' => $all->email,
+                'password' => $all->password,
+                'team' => $all->teamId,
+                'time' => $all->time
+            ]);
+            // Vrátí vloženou hodnotu
+            $this->sendResponse(new JsonResponse(['user' => $all]));
+        } catch (Exception $e) {
+            
+        }
     }
 
     public function actionPostTeam($id) {
@@ -78,6 +125,7 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
             'userId' => $all->userId,
             'dateFrom' => $all->dateFrom,
             'dateTo' => $all->dateTo,
+            'state' => $all->state,
         ]);
         // Vrátí vloženou hodnotu
         $this->sendResponse(new JsonResponse($all));
@@ -90,8 +138,9 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
             'name' => $all->name,
             'email' => $all->email,
             'password' => $all->password,
-            'team' => $all->team
-        ], 'WHERE id = ?', $all->id);
+            'team' => $all->team,
+            'time' => $all->time
+        ], 'WHERE name=? and password=?', $all->name, $all->password);
         // Vrátí vloženou hodnotu
         $this->sendResponse(new JsonResponse($all));
     }
@@ -116,6 +165,7 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
             'userId' => $all->userId,
             'dateFrom' => $all->dateFrom,
             'dateTo' => $all->dateTo,
+            'state' => $all->state,
         ], 'WHERE id = ?', $all->id);
         // Vrátí vloženou hodnotu
         $this->sendResponse(new JsonResponse($all));
