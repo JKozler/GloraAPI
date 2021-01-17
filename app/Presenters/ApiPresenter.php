@@ -56,6 +56,13 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         $this->sendResponse(new JsonResponse(['task' => $data]));
     }
 
+    public function actionGetTaskByName($id) {
+        // Získá cestu k modelovému adresáři
+        $data = $this->database->query('SELECT * FROM task WHERE name=?', $id)->fetchAll();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse(['task' => $data]));
+    }
+
     public function actionGetTeamDetail($id) {
         // Získá cestu k modelovému adresáři
         $data = $this->database->query('SELECT * FROM teams WHERE code=?', $id)->fetch();
