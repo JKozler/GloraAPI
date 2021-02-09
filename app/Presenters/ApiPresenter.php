@@ -42,6 +42,18 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         $this->sendResponse(new JsonResponse(['name' => $dataTeam->name, 'code' => $dataTeam->code, 'isSolved' => $dataTeam->isSolved]));
     }
 
+    public function actionGetAdmin($id) {
+        // Získá cestu k modelovému adresáři
+        $dataAdmin = $this->database->table('admins')->where('userId=?', $id)->fetch();
+        // Vrátí výsledek
+        if($dataAdmin != null) {
+            $this->sendResponse(new JsonResponse(['teamCode' => $dataAdmin->teamCode, 'userId' => $dataAdmin->userId, 'description' => $dataAdmin->description, 'id' => $dataAdmin->id]));
+        }
+        else{
+            $this->sendResponse(new JsonResponse(['id' => "no"]));
+        }
+    }
+
     public function actionUserIdByName($id) {
         // Získá cestu k modelovému adresáři
         $dataTeam = $this->database->table('users')->where('name=?', $id)->fetch();
@@ -78,6 +90,13 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         $this->sendResponse(new JsonResponse(['user' => $data]));
     }
 
+    public function actionGetUserDetailById($id) {
+        // Získá cestu k modelovému adresáři
+        $data = $this->database->query('SELECT * FROM users WHERE id=?', $id)->fetch();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse(['user' => $data]));
+    }
+
     public function actionGetAllUsersFromTeam($id) {
         // Získá cestu k modelovému adresáři
         $data = $this->database->query('SELECT name FROM users WHERE team=?', $id)->fetchAll();
@@ -102,6 +121,36 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
                 'password' => $all->password,
                 'team' => $all->teamId,
                 'time' => $all->time
+            ]);
+            // Vrátí vloženou hodnotu
+            $this->sendResponse(new JsonResponse(['user' => $all]));
+        } catch (Exception $e) {
+            
+        }
+    }
+
+    public function actionPostMess($id) {
+        // Získá cestu k modelovému adresáři
+        $all = Json::decode($id);
+        $this->database->query('INSERT INTO files', [
+            'name' => $all->name,
+            'description' => $all->description,
+            'team' => $all->team,
+            'userFrom' => $all->userFrom,
+            'userTo' => $all->userTo
+        ]);
+        // Vrátí vloženou hodnotu
+        $this->sendResponse(new JsonResponse($all));
+    }
+
+    public function actionPostAdmin($id) {
+        // Získá cestu k modelovému adresáři
+        $all = Json::decode($id);
+        try {
+            $this->database->query('INSERT INTO admins', [
+                'teamCode' => $all->teamCode,
+                'userId' => $all->userId,
+                'description' => $all->description
             ]);
             // Vrátí vloženou hodnotu
             $this->sendResponse(new JsonResponse(['user' => $all]));
@@ -146,7 +195,8 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
             'email' => $all->email,
             'password' => $all->password,
             'team' => $all->team,
-            'time' => $all->time
+            'time' => $all->time,
+            'role' => $all->role
         ], 'WHERE name=? and password=?', $all->name, $all->password);
         // Vrátí vloženou hodnotu
         $this->sendResponse(new JsonResponse($all));
@@ -176,5 +226,24 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         ], 'WHERE id = ?', $all->id);
         // Vrátí vloženou hodnotu
         $this->sendResponse(new JsonResponse($all));
+    }
+
+    public function actionPutAdmin($id) {
+        // Získá cestu k modelovému adresáři
+        $all = Json::decode($id);
+        $this->database->query('UPDATE admins SET', [
+            'teamCode' => $all->teamCode,
+            'description' => $all->description,
+            'userId' => $all->userId
+        ], 'WHERE id = ?', $all->id);
+        // Vrátí vloženou hodnotu
+        $this->sendResponse(new JsonResponse($all));
+    }
+
+    public function actionDeleteAdmin($id) {
+        // Získá cestu k modelovému adresáři
+        $this->database->query('DELETE FROM admins WHERE userId=?', $id);
+        // Vrátí vloženou hodnotu
+        $this->sendResponse(new JsonResponse(['done' => 'yes']));
     }
 }
