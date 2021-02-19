@@ -30,9 +30,9 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
 
     public function actionGetUser($id) {
         // Získá cestu k modelovému adresáři
-        $dataUser = $this->database->table('users')->where('id=?',$id)->fetch();
+        $data = $this->database->table('users')->where('id=?',$id)->fetch();
         // Vrátí výsledek
-        $this->sendResponse(new JsonResponse(['name' => $dataUser->name, 'email' => $dataUser->email, 'team' => $dataUser->team]));
+        $this->sendResponse(new JsonResponse(['name' => $data->name, 'email' => $data->email, 'team' => $data->team, 'password' => $data->password, 'time' => $data->time, 'role' => $data->role]));
     }
 
     public function actionGetTeam($id) {
@@ -97,6 +97,13 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         $this->sendResponse(new JsonResponse(['user' => $data]));
     }
 
+    public function actionGetMess($id) {
+        // Získá cestu k modelovému adresáři
+        $data = $this->database->query('SELECT * FROM files WHERE userTo=?', $id)->fetchAll();
+        // Vrátí vloženou hodnotu
+        $this->sendResponse(new JsonResponse(['mess' => $data]));
+    }
+
     public function actionGetAllUsersFromTeam($id) {
         // Získá cestu k modelovému adresáři
         $data = $this->database->query('SELECT name FROM users WHERE team=?', $id)->fetchAll();
@@ -137,7 +144,8 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
             'description' => $all->description,
             'team' => $all->team,
             'userFrom' => $all->userFrom,
-            'userTo' => $all->userTo
+            'userTo' => $all->userTo,
+            'yes_no' => 0
         ]);
         // Vrátí vloženou hodnotu
         $this->sendResponse(new JsonResponse($all));
@@ -224,6 +232,22 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
             'dateTo' => $all->dateTo,
             'state' => $all->state,
         ], 'WHERE id = ?', $all->id);
+        // Vrátí vloženou hodnotu
+        $this->sendResponse(new JsonResponse($all));
+    }
+
+    public function actionPustMessYes($id) {
+        // Získá cestu k modelovému adresáři
+        $this->database->query('UPDATE files SET', [
+            'yes_no' => 1
+        ], 'WHERE id = ?', $id);
+        // Vrátí vloženou hodnotu
+        $this->sendResponse(new JsonResponse($all));
+    }
+
+    public function actionPustMessNo($id) {
+        // Získá cestu k modelovému adresáři
+        $this->database->query('DELETE FROM files WHERE id=?', $id);
         // Vrátí vloženou hodnotu
         $this->sendResponse(new JsonResponse($all));
     }
