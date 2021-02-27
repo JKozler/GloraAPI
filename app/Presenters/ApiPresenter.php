@@ -42,6 +42,13 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         $this->sendResponse(new JsonResponse(['name' => $dataTeam->name, 'code' => $dataTeam->code, 'isSolved' => $dataTeam->isSolved]));
     }
 
+    public function actionGetEvents($id) {
+        // Získá cestu k modelovému adresáři
+        $dataEvent =  $this->database->query('SELECT * FROM udalosti WHERE team=?', $id)->fetchAll();
+        // Vrátí výsledek
+        $this->sendResponse(new JsonResponse(['nazev' => $dataEvent]));
+    }
+
     public function actionGetAdmin($id) {
         // Získá cestu k modelovému adresáři
         $dataAdmin = $this->database->table('admins')->where('userId=?', $id)->fetch();
@@ -136,6 +143,25 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
         }
     }
 
+    public function actionPostEvent($id) {
+        // Získá cestu k modelovému adresáři
+        $all = Json::decode($id);
+        try {
+            $this->database->query('INSERT INTO udalosti', [
+                'nazev' => $all->nazev,
+                'description' => $all->description,
+                'od_kdy' => $all->od_kdy,
+                'team' => $all->team,
+                'public' => $all->public,
+                'user' => $all->user
+            ]);
+            // Vrátí vloženou hodnotu
+            $this->sendResponse(new JsonResponse(['event' => $all]));
+        } catch (Exception $e) {
+            
+        }
+    }
+
     public function actionPostMess($id) {
         // Získá cestu k modelovému adresáři
         $all = Json::decode($id);
@@ -206,6 +232,21 @@ final class ApiPresenter extends Nette\Application\UI\Presenter
             'time' => $all->time,
             'role' => $all->role
         ], 'WHERE name=? and password=?', $all->name, $all->password);
+        // Vrátí vloženou hodnotu
+        $this->sendResponse(new JsonResponse($all));
+    }
+
+    public function actionPutUserById($id) {
+        // Získá cestu k modelovému adresáři
+        $all = Json::decode($id);
+        $this->database->query('UPDATE users SET', [
+            'name' => $all->name,
+            'email' => $all->email,
+            'password' => $all->password,
+            'team' => $all->team,
+            'time' => $all->time,
+            'role' => $all->role
+        ], 'WHERE id=?', $all->id);
         // Vrátí vloženou hodnotu
         $this->sendResponse(new JsonResponse($all));
     }
